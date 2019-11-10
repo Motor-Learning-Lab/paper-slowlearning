@@ -1,0 +1,130 @@
+model{
+# N observations (subjects * withinX1 * withinX2 * betweenX3)
+for(i in 1:N){ 
+    Y[i] ~ dnorm(muY[i], tauY)
+    muY[i] <- a0 + a1[X1[i]] + a2[X2[i]] + a3[X3[i]] + a12[X1[i],X2[i]] + a123[X1[i],X2[i],X3[i]] + aS[X1[i],X3[i],id[i]] 
+}
+
+# Convert effects to sum-to-zero, see 20.5.2.2 Kruschke
+for (j1 in 1:nX1) { 
+    for (j2 in 1:nX2) {
+        for (j3 in 1:nX3) {
+            for (s in 1:nS[j3]) {
+                m[j1,j2,j3,s] <- a0 + a1[j1] + a2[j2] + a3[j3] + a12[j1,j2] + a123[j1,j2,j3] + aS[j1,j3,s] # cell means
+            } 
+        }
+    }
+}
+
+# Mean for each subject
+for (j3 in 1:nX3) {
+    for (s in 1:nS[j3]) {
+        mS[j3,s] <- mean(m[1:nX1, 1:nX2, j3, s])
+    }
+}
+
+# Means for each treatment condition (across subjects)
+for (j1 in 1:nX1) { 
+    for (j2 in 1:nX2) {
+        for (j3 in 1:nX3) {
+            m123[j1,j2,j3] <- mean(m[j1,j2,j3,id[1:nS[j3]]])
+        }
+    }
+}
+
+# Mean for between factor (across subjects and within factors)
+for (j3 in 1:nX3) { 
+    m3[j3] <- mean(m123[1:nX1,1:nX2,j3])
+}
+
+# Mean for within factor 1
+for (j1 in 1:nX1) { 
+        m1[j1] <- mean(m123[j1,1:nX2,1:nX3])
+}
+
+# Mean for within factor 2
+for (j2 in 1:nX2) { 
+        m2[j2] <- mean(m123[1:nX1,j2,1:nX3])
+}
+
+# Mean for 2 factor interaction
+for (j1 in 1:nX1) { 
+    for (j2 in 1:nX2) {
+        m12[j1,j2] <- mean(m123[j1,j2,1:nX3])
+    }
+}
+mTot = mean(m123[1:nX1,1:nX2,1:nX3])
+
+# Intercept
+intercept <- mTot
+
+# Deflection for between factor
+for (j3 in 1:nX3) { 
+    group[j3] <- m3[j3] - mTot
+}
+
+# Deflection for within factors
+for (j2 in 1:nX2) { 
+    paradigm[j2] <- m2[j2] - mTot
+}
+for (j1 in 1:nX1) { 
+    phase[j1] <- m1[j1] - mTot
+}
+
+# Deflections for interactions
+for (j1 in 1:nX1) {
+    for (j2 in 1:nX2) {
+        phase_paradigm[j1,j2] <- m12[j1,j2] - (intercept + phase[j1] + paradigm[j2])
+        for (j3 in 1:nX3) {
+            phase_paradigm_group[j1,j2,j3] <- m123[j1,j2,j3] - (intercept + phase[1] + paradigm[j2] + phase_paradigm[j1, j2])
+        }
+    }
+}
+
+# Deflection for each subject
+for (j3 in 1:nX3) {
+    for (s in 1:nS[j3]) {
+        betaS[j3,s] <- mS[j3,s] - (intercept + group[j3])
+    }
+}
+
+# Priors
+tauY ~ dgamma(0.001, 0.001)
+for (j1 in 1:nX1) {
+    for (j3 in 1:nX3) {
+    tauS[j1,j3] ~ dt(0, 1/2.5^2,7)T(0,)
+    }
+}
+
+a0 ~ dnorm(0, 10^-6)
+for (j1 in 1:nX1) {
+    a1[j1] ~ dnorm(0, 10^-6)
+}
+for (j2 in 1:nX2) {
+    a2[j2] ~ dnorm(0, 10^-6)
+}
+for (j3 in 1:nX3) {
+    a3[j3] ~ dnorm(0, 10^-6)
+}
+for (j1 in 1:nX1) {
+    for (j2 in 1:nX2) {
+        a12[j1,j2] ~ dnorm(0, 10^-6)
+    }
+}
+for (j1 in 1:nX1) {
+    for (j2 in 1:nX2) {
+        for(j3 in 1:nX3) {
+            a123[j1,j2,j3] ~ dnorm(0, 10^-6)
+        }
+    }
+}
+
+# Random effects
+for (j1 in 1:nX1) {
+    for (j3 in 1:nX3) {
+        for(s in 1:nS[j3]){
+            aS[j1,j3,s] ~ dnorm(0, tauS[j1,j3])
+        }
+    }
+}
+}

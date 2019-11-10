@@ -1,0 +1,53 @@
+model{
+    # State space model
+    for(s in 1:numSubjects) {
+        for(t in 1:numTrials) {
+        # Model takes reaching angles (y) to calculate error
+	error[s,t] <- y[s,t] + pertSize[t]
+        xFastMu[s,t] <- (AFast[s] * xFast[s,t]) - (BFast[s] * (error[s,t]*clampTrial[t]))
+        xSlowMu[s,t] <- (ASlow[s] * xSlow[s,t]) - (BSlow[s] * (error[s,t]*clampTrial[t]))
+        xFast[s,t+1] ~ dnorm(xFastMu[s,t], statePrec[s])
+        xSlow[s,t+1] ~ dnorm(xSlowMu[s,t], statePrec[s])
+        x[s,t] <- xFast[s,t] + xSlow[s,t]
+        y[s,t] ~ dnorm(x[s,t], outputPrec[s])
+    }
+
+    # Probe states of xFast/xSlow at given intervals
+    for(p in 1:numProbes) {
+        xFastProbe[s,p] <- mean(xFast[s,xProbes[p,1]:xProbes[p,2]])
+        xSlowProbe[s,p] <- mean(xSlow[s,xProbes[p,1]:xProbes[p,2]])
+    }
+
+    # Draw A/B 
+    ASlow1[s] ~ dnorm(ASlowHypMu,ASlowHypPrec)
+    AFast1[s] ~ dnorm(AFastHypMu,AFastHypPrec)T(,ASlow1[s]) # Truncate AFast so it is < ASlow
+    BFast1[s] ~ dnorm(BFastHypMu,BFastHypPrec)
+    BSlow1[s] ~ dnorm(BSlowHypMu,BSlowHypPrec)T(,BFast1[s]) # Truncate BSlow so it is < BFast
+
+    # From logspace to 0-1
+    ASlow[s] <- ilogit(ASlow1[s])
+    AFast[s] <- ilogit(AFast1[s])
+    BFast[s] <- ilogit(BFast1[s])
+    BSlow[s] <- ilogit(BSlow1[s])
+
+    # Draw noise 
+    statePrec[s] ~ dgamma(1.0E-3,1.0E-3)
+    outputPrec[s] ~ dgamma(1.0E-3,1.0E-3)
+
+    # Initialize t = 1
+    xFast[s,1] ~ dnorm(0, 1.0E-1)
+    xSlow[s,1] ~ dnorm(0, 1.0E-1)
+    }
+
+    # Hyperparameters
+    ASlowHypMu ~ dnorm(0.0, 1.0E-3)
+    AFastHypMu ~ dnorm(0.0, 1.0E-3)
+    BFastHypMu ~ dnorm(0.0, 1.0E-3)
+    BSlowHypMu ~ dnorm(0.0, 1.0E-3)
+    
+    # Precs
+    ASlowHypPrec ~ dt(0, 1/2.5^2, 7)T(0,)
+    AFastHypPrec ~ dt(0, 1/2.5^2, 7)T(0,)
+    BFastHypPrec ~ dt(0, 1/2.5^2, 7)T(0,)
+    BSlowHypPrec ~ dt(0, 1/2.5^2, 7)T(0,)
+}
