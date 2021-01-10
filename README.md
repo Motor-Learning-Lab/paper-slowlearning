@@ -1,6 +1,4 @@
-# paper-extendedtraining
-
-JAGS models code.
+JAGS model code for:
 
 ## Can we improve slow learning in cerebellar patients?
 #### Abbreviated title: Slow learning in cerebellar patients 
