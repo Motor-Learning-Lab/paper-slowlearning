@@ -14,6 +14,7 @@ Thomas Hulst 1,2,3*, Ariels Mamlins 1, Maarten Frens 3, Dae-In Chang 1, Sophia L
 5. Department of Biomedical Engineering, Zlotowski Center for Neuroscience, Ben-Gurion University of the Negev, Beer-Sheva 8410501, Israel
 
 \# Authors contributed equally to this work. 
+
 \* Corresponding author at: Erasmus University College, Nieuwemarkt 1A, 3011 HP, Rotterdam, E-mail address: hulst@euc.eur.nl (Thomas Hulst)
 
 
