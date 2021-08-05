@@ -1,0 +1,38 @@
+model {
+   # x1 = trial
+   # x2 = phase
+   # x3 = paradigm
+   # s = subject
+   # Distribution of the data
+   for (i in 2:nData) {
+       y[i] ~ dnorm(muY[i], 1 / (sdY[S[i]]^2) );
+       muY[i] <- a0[X2[i],X3[i],S[i]] + a1[X2[i],X3[i],S[i]]*y[i-1];
+   }
+
+   for (s1 in 1:nS) {
+       sdY[s1] ~ dgamma(shSdY, raSdY);
+       for (j1 in 1:nX2) {
+           for (j2 in 1:nX3) {
+               a0[j1, j2, s1] ~ dnorm(a0mu[j1, j2], 1 / (sdSA0^2) );
+               a1[j1, j2, s1] ~ dnorm(a1Smu[j1, j2, s1], 1 / (sdSA1^2) );
+               a1Smu[j1, j2, s1] <- a1mu[j1, j2] + a1S[s1];
+           }
+       }
+       a1S[s1] ~ dnorm(0, 1 / sdA1S^2);
+   }
+   
+   for (j1 in 1:nX2) {
+           for (j2 in 1:nX3) {
+               a0mu[j1, j2] ~ dnorm(a0mumu, 1 / (sdA0^2) );
+               a1mu[j1, j2] ~ dnorm(a1mumu, 1 / (sdA1^2) );
+       }
+   }
+  
+   # Distribution of the per subject sd of the data
+   raSdY <- (modeSdY + sqrt(modeSdY^2 + 4*sdSdY^2))/(2*sdSdY^2);
+   shSdY <- 1 + modeSdY*raSdY;
+   
+   modeSdY ~ dgamma(shModeSdY, raModeSdY);
+   sdSdY ~ dgamma(shSdSdY, raSdSdY);
+
+}

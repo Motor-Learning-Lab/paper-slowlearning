@@ -4,10 +4,7 @@ for(i in 1:N){
     Y[i] ~ dnorm(muY[i], tauY)
     muY[i] <- a0 + a1[X1[i]] + a2[X2[i]] + a3[X3[i]] + a12[X1[i],X2[i]] + a123[X1[i],X2[i],X3[i]] + aS[X1[i],X3[i],id[i]] 
 }
-# Convert effects to sum-to-zero, see page 20.5.2.2 Kruschke
-# This is probably wrong because it assumes the same number of subjects in each group. A little tired
-# to think right now of the best way to do it with different numbers of subjects in each group. Since there
-# are only two groups, it may be easiest just to duplicate code rather than using loops
+
 for (j1 in 1:nX1) { 
     for (j2 in 1:nX2) {
         for (j3 in 1:nX3) {
